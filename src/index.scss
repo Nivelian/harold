@@ -1,4 +1,12 @@
-html, body, #root {width: 100%; height: 100%}
+.row {display: flex}
+.column {@extend .row; flex-direction: column}
+.row-centered {@extend .row; align-items: center}
+.column-centered {@extend .column; align-items: center}
+.centered {@extend .row-centered; justify-content: center}
+
+.full {width: 100%; height: 100%}
+
+html, body, #root {@extend .full}
 body {
   margin: 0;
   padding: 0;
@@ -13,9 +21,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
-
-.row {display: flex}
-.column {@extend .row; flex-direction: column}
-.row-centered {@extend .row; align-items: center}
-.column-centered {@extend .column; align-items: center}
-.centered {@extend .row-centered; justify-content: center}
