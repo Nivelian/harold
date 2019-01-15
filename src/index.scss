@@ -5,6 +5,8 @@
 .centered {@extend .row-centered; justify-content: center}
 
 .full {width: 100%; height: 100%}
+.anchor {position: relative}
+.float {position: absolute}
 
 html, body, #root {@extend .full}
 body {

@@ -18,7 +18,7 @@ class _Game extends Component {
   }
 
   render () {return (
-    <div className="full"> <Harold center={this.state.center} /> </div>
+    <div className="full anchor"> <Harold center={this.state.center} /> </div>
   )};
 }
 
