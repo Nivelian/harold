@@ -1,2 +1,2 @@
-export { let_ } from './function';
+export { let_, when } from './function';
 export { keymap } from './object';
