@@ -1,2 +1,3 @@
-export { identity, bool, let_, when } from './function';
+export { identity, bool, let_, when, comp } from './function';
+export { transpose } from './array';
 export { keymap } from './object';
