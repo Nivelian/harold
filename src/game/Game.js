@@ -1,55 +1,67 @@
 import React, { Component } from 'react';
 import CSSModules from 'react-css-modules';
 import styles from './Game.module.scss';
-import { toArray, sum } from 'lodash';
-import { map, filter } from 'lodash/fp';
-import { when, let_, bool, comp, transpose, keymap } from 'utils';
+import { toArray, sum, assign, isEqual } from 'lodash';
+import { filter } from 'lodash/fp';
+import { when, let_, bool, comp, fitBounds } from 'utils';
 import { Harold } from './harold/Harold';
 
-const DIR = {
-  37: 'w',
-  38: 'n',
-  39: 'e',
-  40: 's',
-};
-const SHIFT = {
-  w: [-1,  0],
-  n: [ 0, -1],
-  e: [ 1,  0],
-  s: [ 0,  1],
-};
-const SPEED = 5;
+const [MAX_SPEED, ACC] = [5, .1];
+const X_DIR = {37: -1, 39: 1};
 
-let _coord = f => keymap(['x', 'y'], f);
-let _shift = comp(map(sum), transpose, map(s => SHIFT[s]), filter(bool), toArray);
+const [HAROLD_W, HAROLD_H] = [40, 40];
+
+let _compose = comp(sum, filter(bool), toArray);
 
 class _Game extends Component {
-  directions = new Set();
-  shift = [];
+  xDirections = new Set();
+  dir = {x: 0, y: -1};
+  speed = {x: {'+': 0, '-': 0}, y: {'+': 0, '-': 0}};
 
   constructor (props) {
     super(props);
-    this.state = {center: {x: 0, y: 0}};
+    this.state = {max:    {x: 0, y: 0},
+                  harold: {width: HAROLD_W, height: HAROLD_H, x: 0, y: 0}};
   }
 
   componentDidMount () {this.redraw()}
+  componentDidUpdate ({dim}) {
+    when(!isEqual(dim, this.props.dim) && this.props.dim,
+      o => {this._setState({max: {x: o.width - HAROLD_W, y: o.height - HAROLD_H}})})}
 
-  setDir = b => ({keyCode}) => let_((x=DIR[keyCode]) => {
-    when(!(b && this.directions.has(x)), () => {          // avoid repetitive keydown calls
-      this.directions[b ? 'add' : 'delete'](x);
-      this.shift = _shift(this.directions);
+  setY = b => {this.dir.y = (b ? 1 : -1)}
+  setX = (code, b) => let_((x=X_DIR[code]) => {
+    when(!(b && this.xDirections.has(x)), () => {          // avoid repetitive keydown calls
+      this.xDirections[b ? 'add' : 'delete'](x);
+      this.dir.x = _compose(this.xDirections);
     });
+  });
+  setDir = b => ({keyCode}) => (keyCode === 32 ? this.setY(b) : this.setX(keyCode, b));
+
+  _iteration = k => let_((low=this.harold[k] <= 0, high=this.harold[k] >= this.max[k]) => {
+    when(this.dir[k] ===  1, () => {this.speed[k]['+'] = high ? 0 : Math.min(MAX_SPEED, this.speed[k]['+']+ACC)});
+    when(this.dir[k] === -1, () => {this.speed[k]['-'] = low  ? 0 : Math.min(MAX_SPEED, this.speed[k]['-']+ACC)});
+    when(this.dir[k] !== -1, () => {this.speed[k]['-'] = high ? 0 : Math.max(0, this.speed[k]['-']-ACC)});
+    when(this.dir[k] !==  1, () => {this.speed[k]['+'] = low  ? 0 : Math.max(0, this.speed[k]['+']-ACC)});
+    return this.speed[k]['+']-this.speed[k]['-'];
   });
 
   redraw = () => {
-    this.setState({center: _coord((s, i) => this.state.center[s]+(this.shift[i]||0)*SPEED)});
+    ['x', 'y'].forEach(k =>
+      this._setHarold({[k]: fitBounds(0, this.max[k], this.harold[k] + this._iteration(k))}));
     requestAnimationFrame(this.redraw);
   };
 
+  _setHarold = (...os) => this._setState({harold: assign(this.harold, ...os)});
+  _setState = (...os) => this.setState( assign(this.state, ...os) );
+
   render () {return (
     <div className="full anchor" tabIndex="0" onKeyDown={this.setDir(true)} onKeyUp={this.setDir(false)}>
-      <Harold center={this.state.center} /> </div>
+      <Harold opts={this.state.harold} /> </div>
   )};
+
+  get harold () {return this.state.harold}
+  get max    () {return this.state.max}
 }
 
 export let Game = CSSModules(_Game, styles);

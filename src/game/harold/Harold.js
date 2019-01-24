@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
 import CSSModules from 'react-css-modules';
-import { let_ } from 'utils';
+import { keymap } from 'utils';
 import styles from './Harold.module.scss';
 
-const [WIDTH, HEIGHT] = [40, 40];
+let _convert = s => (s === 'left'   ? 'x' :
+                     s === 'bottom' ? 'y' :
+                     s);
 
 class _Harold extends Component {
   render () {return (
-    <div styleName="brick" className="float" style={{width: WIDTH, height: HEIGHT, ...this.pos}}> </div>
+    <div styleName="brick" className="float"
+         style={{...keymap(['width', 'height', 'left', 'bottom'],
+                           s => this.props.opts[_convert(s)])}}> </div>
   )};
-
-  get pos () {return let_((f=(s, x)=>this.props.center[s]-x/2) => ({left: f('x', WIDTH), top: f('y', HEIGHT)}))}
 }
 
 export let Harold = CSSModules(_Harold, styles);
