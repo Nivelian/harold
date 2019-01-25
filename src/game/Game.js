@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import CSSModules from 'react-css-modules';
 import styles from './Game.module.scss';
 import { toArray, sum, assign, isEqual } from 'lodash';
@@ -17,14 +17,19 @@ class _Game extends Component {
   xDirections = new Set();
   dir = {x: 0, y: -1};
   speed = {x: {'+': 0, '-': 0}, y: {'+': 0, '-': 0}};
+  _screen;
 
   constructor (props) {
     super(props);
     this.state = {max:    {x: 0, y: 0},
                   harold: {width: HAROLD_W, height: HAROLD_H, x: 0, y: 0}};
+    this._screen = createRef();
   }
 
-  componentDidMount () {this.redraw()}
+  componentDidMount () {
+    this.redraw();
+    this._screen.current.focus();
+  }
   componentDidUpdate ({dim}) {
     when(!isEqual(dim, this.props.dim) && this.props.dim,
       o => {this._setState({max: {x: o.width - HAROLD_W, y: o.height - HAROLD_H}})})}
@@ -56,7 +61,8 @@ class _Game extends Component {
   _setState = (...os) => this.setState( assign(this.state, ...os) );
 
   render () {return (
-    <div className="full anchor" tabIndex="0" onKeyDown={this.setDir(true)} onKeyUp={this.setDir(false)}>
+    <div ref={this._screen} className="full anchor" tabIndex="0"
+         onKeyDown={this.setDir(true)} onKeyUp={this.setDir(false)}>
       <Harold opts={this.state.harold} /> </div>
   )};
 
