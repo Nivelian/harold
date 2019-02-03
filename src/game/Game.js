@@ -32,20 +32,21 @@ class _Game extends Component {
   }
   componentDidUpdate ({dim}) {
     when(!isEqual(dim, this.props.dim) && this.props.dim,
-      o => {this._setState({max: {x: o.width - HAROLD_W, y: o.height - HAROLD_H}})})}
+      o => this._setState({max: {x: o.width - HAROLD_W, y: o.height - HAROLD_H}}))}
 
   _setSpeed = k => let_((dir=this.dir[k], v=this.speed[k]) => {
     let [low, high] = [this.harold[k] <= 0, this.harold[k] >= this.max[k]];
-    let diff = ACC*(dir !== 0 ? dir : -Math.sign(v)/2);
-    this.speed[k] = (v && (low || high)) ? 0 : fitBounds(-MAX_SPEED , MAX_SPEED, v+diff)});
+    let brake = -(ACC/2 > Math.abs(v) ? v : ACC*Math.sign(v)/2);
+    let diff = (dir !== 0 ? ACC*dir : brake);
+    this.speed[k] = (v && (low || high)) ? 0 : fitBounds(-MAX_SPEED , MAX_SPEED, v+diff);
+  });
 
   setY = b => {this.dir.y = (b ? 1 : -1)};
-  setX = (code, b) => let_((x=X_DIR[code]) => {
+  setX = (code, b) => let_((x=X_DIR[code]) =>
     when(!(b && this.xDirections.has(x)), () => {
       this.xDirections[b ? 'add' : 'delete'](x);
       this.dir.x = _compose(this.xDirections);
-    });
-  });
+    }));
   setDir = b => ({keyCode}) => (keyCode === 32 ? this.setY(b) : this.setX(keyCode, b));
 
   redraw = () => {
